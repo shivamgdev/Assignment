@@ -258,12 +258,12 @@ The highest-priority improvements would be:
 
 The following is an approximate breakdown; time was not tracked precisely.
 
-- Environment setup and project structure: 1 hour
+- Environment setup and project structure: 0.5 hour
 - Backend implementation: 4 hours
 - Automated testing and concurrency verification: 2 hours
-- README and design decisions documentation: 1.5 hours
+- README and design decisions documentation: 1 hours
 - Final review and cleanup: 0.5 hour
 
-**Approximate total: 9 hours**
+**Approximate total: 8 hours**
 
 These estimates are approximate and reflect the work performed on this assignment.
