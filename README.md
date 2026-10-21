@@ -1,72 +1,75 @@
-# Assignment
+# Ecommerce Checkout & Rewards API
 
-You are designing an ecommerce store. Clients can add items to their cart and checkout to successfully place an order.  The store has a discount system that rewards customers.
+A backend service for an ecommerce store that supports product browsing, cart management, checkout, discount coupon redemption, and administrative rewards reporting.
 
-We would like you to design and implement APIs for adding items to cart and checkout functionality. The checkout API would validate if the discount code is valid before giving the discount. 
+## Features
 
-Discount System works in the following ways - Every Every *n*th order gets a coupon code for x% discount. Discount codes can be applied at checkout. 
+- Create and manage shopping carts.
+- Add, update, and remove cart items.
+- Checkout with inventory validation and coupon discount validation.
+- Idempotent checkout requests to prevent duplicate orders on retries.
+- Generate discount coupons when eligible order milestones are reached.
+- Prevent duplicate coupon redemption and overselling during concurrent checkouts.
+- Admin endpoints for rewards configuration, coupon generation, and sales summaries.
 
-The store also has two admin API's:
-1. Generate a discount code if the condition above is satisfied.
-2. Lists count of items purchased, revenue, discount codes and total discounts given. 
+## Tech Stack
 
-You can build this with a technology stack that you are comfortable with. You would push the code to your github repo and share the link once its complete. We would like to see your commits that show progression and thought process as to how you are completing the exercise. 
+- Python
+- FastAPI
+- SQLAlchemy
+- SQLite
+- Pytest
 
-## What We're Looking For
+## Project Structure
 
-We want to see **how you think**, not just that you can produce working code. You are encouraged to use AI tools to help you code faster, but you must demonstrate understanding of your choices.
+- `be/` — Backend application, APIs, business logic, and tests.
+- `be/README.md` — Backend setup instructions and API documentation.
+- `be/DECISIONS.md` — Design decisions, trade-offs, and implementation considerations.
+- `fe/` — Optional React and TypeScript enrollment review workbench, separate from the ecommerce assignment.
 
-### Required Deliverables
+## Setup and Run
 
-#### 1. Working Code
-- Functional APIs (backend required, frontend is a plus)
-- Code quality
-- In-memory store is fine (no database needed)
-- Unit tests for core business logic
-- Code comments, readme docs
+The backend setup and run instructions are maintained in [`be/README.md`](be/README.md). Follow that document to install dependencies, configure the environment, start the API server, and access the API documentation.
 
-#### 2. DECISIONS.md (Required)
-Create a `DECISIONS.md` file documenting **at least 5 design decisions** you made. For each decision:
+## Run Tests
 
-```markdown
-## Decision: [Title]
+From the repository root:
 
-**Context:** What problem were you solving?
-
-**Options Considered:**
-- Option A: [description]
-- Option B: [description]
-
-**Choice:** [What you chose]
-
-**Why:** [Your reasoning - trade-offs, constraints, future considerations]
+```bash
+cd be
+python -m pytest -v
 ```
+
+## Design Decisions
+
+The ecommerce backend's design decisions, including checkout consistency, idempotency, inventory concurrency, coupon validation, money handling, and production considerations, are documented in [`be/DECISIONS.md`](be/DECISIONS.md).
+
+## Verification
+
+Backend automated tests: 17 passed in the latest recorded test run.
+
+## Scope Notes
+
+This repository also contains a separate frontend assignment in `fe/`. The ecommerce checkout and rewards implementation is in `be/`.
+
+## Assignment Deliverables
+
+- Working backend APIs for cart management, checkout, coupon validation, and administrative reporting.
+- Automated tests for core business logic.
+- Setup instructions and API documentation.
+- Root-level `DECISIONS.md` documenting design decisions, trade-offs, concurrency, idempotency, money rounding, errors, deferred work, production scaling, AI usage, and possible next steps.
+- Meaningful Git history showing implementation progression.
+- GitHub repository link for submission.
+
+The backend is the required part of the ecommerce assignment. The `fe/` directory contains a separate frontend assignment and is maintained independently.
+
+## Known Scope Limitations
+
+- Admin endpoints do not include authentication; authorization was outside the implemented assignment scope.
+- SQLite is used for this implementation. Production deployment across multiple application instances would require reviewing database locking, migrations, and concurrency behavior for the chosen production database.
+
 ## Submission
 
-1. Push to your GitHub repo
-2. Ensure repo contains:
-   - Source code
-   - `README.md` with setup instructions
-   - `DECISIONS.md` with your design decisions
-   - Tests
-3. Share the repo link
+Repository: [https://github.com/neustackapp/assignment](https://github.com/neustackapp/assignment)
 
-
-## FAQ:
-**Q: Can I use AI tools like GitHub Copilot or ChatGPT?**  
-A: Yes! But you must understand and be able to explain every line of code. We will ask about your implementation in the follow-up interview.
-
-**Q: Do I need a database?**  
-A: No, in-memory storage is fine.
-
-**Q: Frontend required?**  
-A: Backend is required. Frontend is a plus but not required. If no frontend, provide Postman collection or similar.
-
-**Q: What tech stack should I use?**  
-A: Whatever you're most comfortable with. We primarily work with TypeScript/Node.js, but use what lets you demonstrate your skills best.
-
-All the best!
-
-## Implementation
-
-The backend implementation, setup instructions, API documentation, and test commands are in [be/README.md](be/README.md). Design choices and trade-offs are documented in [be/DECISIONS.md](be/DECISIONS.md).
+Before submission, run the backend tests and review the final Git status and commit history. Report only verification results that have actually been run.
