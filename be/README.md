@@ -184,3 +184,270 @@ Share a public or access-granted Git repository containing:
 State the approximate time spent. If something is incomplete, tell us directly and explain how you would finish it.
 
 Good luck—we are looking forward to discussing your reasoning.
+## Implementation Guide
+
+### Overview
+
+The backend uses Python, FastAPI, SQLAlchemy, and SQLite. It supports product listing, cart management, checkout, order retrieval, configurable rewards, coupon generation and redemption, and an administrative summary report.
+
+No external payment provider is integrated. A successful checkout represents successful order placement.
+
+### Prerequisites
+
+- Python 3.11 or later
+- pip
+
+### Setup and Run
+
+Open a terminal in the `be` directory.
+
+Create and activate a virtual environment on Windows:
+
+```text
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+Install dependencies:
+
+```text
+python -m pip install -r requirements.txt
+```
+
+Start the API:
+
+```text
+python -m uvicorn app.main:app --reload
+```
+
+The default SQLite database is stored in the backend directory. Sample products are seeded when the product table is empty.
+
+Interactive API documentation: http://127.0.0.1:8000/docs
+
+### Automated Tests
+
+Run the tests from the `be` directory:
+
+```text
+python -m pytest -v
+```
+
+Tests use isolated temporary SQLite databases.
+
+### API Reference
+
+| Method | Endpoint | Purpose | Success |
+|---|---|---|---:|
+| GET | `/health` | Health check | 200 |
+| GET | `/products` | List products | 200 |
+| POST | `/carts` | Create a cart | 201 |
+| GET | `/carts/{cart_id}` | Retrieve a cart and totals | 200 |
+| POST | `/carts/{cart_id}/items` | Add a product and quantity | 200 |
+| PUT | `/carts/{cart_id}/items/{product_id}` | Update item quantity | 200 |
+| DELETE | `/carts/{cart_id}/items/{product_id}` | Remove a cart item | 200 |
+| POST | `/carts/{cart_id}/checkout` | Check out a cart | 201 |
+| GET | `/orders/{order_id}` | Retrieve an order | 200 |
+| GET | `/admin/rewards/config` | Retrieve rewards configuration | 200 |
+| PUT | `/admin/rewards/config` | Update rewards configuration | 200 |
+| POST | `/admin/rewards/coupons/generate` | Generate an eligible coupon | 200 |
+| GET | `/admin/reports/summary` | Retrieve the summary report | 200 |
+
+### Request and Response Contracts
+
+All request and response bodies use JSON where applicable. Example IDs and values are illustrative. Monetary values use integer minor currency units rather than floating-point values.
+
+**Products — `GET /products`**
+
+Returns an array of products:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Wireless Mouse",
+    "unit_price_minor": 79900,
+    "inventory": 25
+  }
+]
+```
+
+**Create a cart — `POST /carts`**
+
+No request body is required. Returns `201 Created`:
+
+```json
+{
+  "id": 1,
+  "status": "OPEN"
+}
+```
+
+**Retrieve a cart — `GET /carts/{cart_id}`**
+
+Returns the cart, its items, and the current total:
+
+```json
+{
+  "id": 1,
+  "status": "OPEN",
+  "items": [
+    {
+      "product_id": 1,
+      "product_name": "Wireless Mouse",
+      "quantity": 2,
+      "unit_price_minor": 79900,
+      "line_total_minor": 159800
+    }
+  ],
+  "total_minor": 159800
+}
+```
+
+**Add an item — `POST /carts/{cart_id}/items`**
+
+Request:
+
+```json
+{
+  "product_id": 1,
+  "quantity": 2
+}
+```
+
+Returns `200 OK` with the updated cart response.
+
+**Update an item — `PUT /carts/{cart_id}/items/{product_id}`**
+
+Request:
+
+```json
+{
+  "quantity": 3
+}
+```
+
+Returns `200 OK` with the updated cart response.
+
+**Remove an item — `DELETE /carts/{cart_id}/items/{product_id}`**
+
+No request body is required. Returns `200 OK` with the updated cart response.
+
+**Checkout — `POST /carts/{cart_id}/checkout`**
+
+The `Idempotency-Key` header is required. An optional `coupon_code` query parameter can be supplied.
+
+Example request:
+
+```text
+POST /carts/1/checkout?coupon_code=REWARD-EXAMPLE
+Idempotency-Key: checkout-request-001
+```
+
+Returns `201 Created` for a new checkout:
+
+```json
+{
+  "id": 1,
+  "cart_id": 1,
+  "status": "PLACED",
+  "gross_total_minor": 159800,
+  "discount_minor": 15980,
+  "net_total_minor": 143820,
+  "items": [
+    {
+      "product_id": 1,
+      "product_name": "Wireless Mouse",
+      "unit_price_minor": 79900,
+      "quantity": 2,
+      "line_total_minor": 159800
+    }
+  ]
+}
+```
+
+The example discount assumes a valid 10% coupon. Without a coupon, `discount_minor` is zero. Use a real generated coupon when testing coupon redemption.
+
+A retry using the same idempotency key and the same cart and coupon returns the existing order without creating another order or deducting inventory again. Reusing a key for a different checkout request returns `409 Conflict`.
+
+**Retrieve an order — `GET /orders/{order_id}`**
+
+Returns `200 OK` with the order response, including purchase-time item snapshots. Returns `404 Not Found` when the order does not exist.
+
+**Configure rewards — `PUT /admin/rewards/config`**
+
+Request:
+
+```json
+{
+  "orders_per_coupon": 5,
+  "discount_percent": 10
+}
+```
+
+Returns `200 OK` with the saved configuration. Both values must be positive integers; the discount percentage cannot exceed 100.
+
+**Read rewards configuration — `GET /admin/rewards/config`**
+
+Returns `200 OK` with the current configuration. Returns `404 Not Found` if no configuration has been set.
+
+**Generate a coupon — `POST /admin/rewards/coupons/generate`**
+
+No request body is required. Returns `200 OK` with a result containing `generated`, `message`, and `coupon`. The coupon may be `null` when generation does not occur. Generation requires a configured rewards rule and a reached order milestone.
+
+Each milestone can have at most one coupon. If multiple milestones are eligible, the service generates the earliest missing milestone first.
+
+**Summary report — `GET /admin/reports/summary`**
+
+Returns `200 OK` with:
+
+- `total_successful_orders`
+- `gross_revenue_minor`
+- `total_discounts_minor`
+- `net_revenue_minor`
+- `coupons_generated`
+- `coupons_available`
+- `coupons_redeemed`
+- `products`: product ID, product name, and quantity sold
+
+The report is read-only and uses successfully placed orders.
+
+### Error Handling
+
+Service-level errors use this response shape:
+
+```json
+{
+  "detail": "Cart not found"
+}
+```
+
+Important HTTP statuses include:
+
+| Status | Meaning | Examples |
+|---|---|---|
+| 404 | Resource not found | Missing cart, product, order, or cart item |
+| 409 | Conflict with current state | Empty or checked-out cart, insufficient inventory, redeemed coupon, conflicting idempotency key, or coupon milestone not reached |
+| 422 | Invalid input | Invalid quantity, invalid coupon input, or invalid rewards configuration |
+
+FastAPI request validation errors also return `422` with FastAPI's standard validation response format. Exact service error messages are returned in the `detail` field.
+
+### Pricing, Inventory, and Coupon Rules
+
+- Product prices and inventory are checked at checkout. Adding a product to a cart does not lock its price.
+- The order stores product names, unit prices, quantities, and line totals as a purchase-time snapshot.
+- Checkout uses database transactions and conditional inventory updates to help prevent overselling.
+- Coupon redemption and order creation happen in the same checkout transaction. Failed checkouts do not permanently consume coupons.
+- A coupon can be redeemed only once.
+- Monetary calculations use integer minor units and deterministic integer rounding.
+
+### Administration and Security
+
+All `/admin/` endpoints are administrative operations. Authentication and authorization are not implemented because they were outside the assignment scope. These endpoints must be protected before production deployment.
+
+### Persistence and Limitations
+
+SQLite provides persistent storage for this assignment. Transactions, conditional updates, and database constraints help preserve checkout and coupon invariants.
+
+The implementation has not been load-tested for production traffic or validated for multi-instance deployment. For production, evaluate PostgreSQL or another server database, authentication and authorization, database migrations, monitoring, backups, and operational retention policies.
+
+See `DECISIONS.md` for design decisions, trade-offs, implemented and deferred scope, AI usage, and possible future improvements.

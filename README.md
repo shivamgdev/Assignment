@@ -66,3 +66,7 @@ A: Backend is required. Frontend is a plus but not required. If no frontend, pro
 A: Whatever you're most comfortable with. We primarily work with TypeScript/Node.js, but use what lets you demonstrate your skills best.
 
 All the best!
+
+## Implementation
+
+The backend implementation, setup instructions, API documentation, and test commands are in [be/README.md](be/README.md). Design choices and trade-offs are documented in [be/DECISIONS.md](be/DECISIONS.md).
