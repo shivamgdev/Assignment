@@ -202,3 +202,51 @@ We will evaluate:
 | Communication | A candid, specific `decisions.md` that explains tradeoffs and AI-assisted work |
 
 Visual polish matters, but it will not compensate for incorrect behavior or unexplained decisions.
+
+
+## Running locally
+
+### Prerequisites
+
+- Node.js 24 or another compatible Node.js version.
+- npm.
+
+### Install dependencies
+
+Run from the `fe` directory:
+
+```bash
+npm install
+```
+
+### Start the mock API
+
+Open the first terminal in the `fe` directory:
+
+```bash
+node mock-api.cjs
+```
+
+The mock API runs on port `4000` by default and loads submissions from `mock-data.json`. Keep this terminal running.
+
+### Start the frontend
+
+Open a second terminal in the `fe` directory:
+
+```bash
+npm run dev
+```
+
+Open the local URL printed by Vite. The development server proxies `/api` requests to the mock API on port `4000`.
+
+### Run tests and quality checks
+
+From the `fe` directory, run:
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+The integration tests start their own mock API on port `4317`, independently of the development API on port `4000`.
