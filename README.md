@@ -70,6 +70,6 @@ The backend is the required part of the ecommerce assignment. The `fe/` director
 
 ## Submission
 
-Repository: [https://github.com/neustackapp/assignment](https://github.com/neustackapp/assignment)
+Repository: https://github.com/shivamgdev/Assignment
 
 Before submission, run the backend tests and review the final Git status and commit history. Report only verification results that have actually been run.
